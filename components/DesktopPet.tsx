@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Gamepad2, Bot, Pizza, Heart } from 'lucide-react';
 import { motion, useAnimation, AnimatePresence, useDragControls } from 'framer-motion';
 import { useAppContext } from '../contexts/AppContext';
@@ -34,7 +34,7 @@ interface DesktopPetProps {
     isDoingBackflip: boolean;
 }
 
-const WalkingCat: React.FC<DesktopPetProps> = ({ isDoingBackflip }) => {
+const DesktopPet: React.FC<DesktopPetProps> = ({ isDoingBackflip }) => {
   const { openWindow, windows, clickCount, isGuiding, setIsGuiding, setPetDoingBackflip, addNotification, toast } = useAppContext();
   const controls = useAnimation();
   const dragControls = useDragControls();
@@ -421,162 +421,157 @@ const WalkingCat: React.FC<DesktopPetProps> = ({ isDoingBackflip }) => {
 
   return (
     <motion.div
-        className="fixed z-50 flex flex-col items-center pointer-events-auto"
+        className="fixed z-[99] pointer-events-none" // Main container is non-interactive
         initial={{ x: 100, y: window.innerHeight - 250 }}
         animate={controls}
-        drag
-        dragControls={dragControls}
-        dragListener={false}
-        dragMomentum={false}
-        onDragStart={() => {
-            if (isGuiding || mood === 'backflipping') return;
-            controls.stop();
-            if (actionTimeoutRef.current) clearTimeout(actionTimeoutRef.current);
-            setIsDragging(true);
-            setMood('surprised');
-        }}
-        onDragEnd={() => {
-            setIsDragging(false);
-            setTimeout(() => {
-                setMood('idle');
-            }, 1000);
-        }}
     >
-        {/* Speech Bubble */}
-        <AnimatePresence>
-        {isBubbleVisible && (
-            <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="relative mb-2 w-48 bg-stone-200/80 dark:bg-stone-800/80 backdrop-blur-lg p-3 rounded-xl border border-stone-300/50 dark:border-stone-700/50 shadow-lg text-stone-800 dark:text-stone-200"
-            >
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-4 h-4 bg-inherit border-b border-r border-stone-300/50 dark:border-stone-700/50 transform rotate-45 -z-10"></div>
-            <p className="text-xs text-center text-stone-600 dark:text-stone-400 min-h-[2.5rem] flex items-center justify-center">{message}</p>
-            {!isGuiding ? (
-                <>
-                    <div className="my-2">
-                        <div className="w-full bg-stone-300 dark:bg-stone-700 rounded-full h-1.5">
-                            <motion.div className={`${happinessColor} h-1.5 rounded-full`} initial={{ width: 0 }} animate={{ width: `${happiness}%` }} transition={{ duration: 0.5 }}></motion.div>
+        <motion.div
+            className="flex flex-col items-center pointer-events-auto" // Inner container is interactive
+            drag
+            dragControls={dragControls}
+            dragListener={false}
+            dragMomentum={false}
+            onDragStart={() => {
+                if (isGuiding || mood === 'backflipping') return;
+                controls.stop();
+                if (actionTimeoutRef.current) clearTimeout(actionTimeoutRef.current);
+                setIsDragging(true);
+                setMood('surprised');
+            }}
+            onDragEnd={() => {
+                setIsDragging(false);
+                setTimeout(() => {
+                    setMood('idle');
+                }, 1000);
+            }}
+        >
+            {/* Speech Bubble */}
+            <AnimatePresence>
+            {isBubbleVisible && (
+                <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    className="relative mb-2 w-48 bg-stone-200/80 dark:bg-stone-800/80 backdrop-blur-lg p-3 rounded-xl border border-stone-300/50 dark:border-stone-700/50 shadow-lg text-stone-800 dark:text-stone-200"
+                >
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-4 h-4 bg-inherit border-b border-r border-stone-300/50 dark:border-stone-700/50 transform rotate-45 -z-10"></div>
+                <p className="text-xs text-center text-stone-600 dark:text-stone-400 min-h-[2.5rem] flex items-center justify-center">{message}</p>
+                {!isGuiding ? (
+                    <>
+                        <div className="my-2">
+                            <div className="w-full bg-stone-300 dark:bg-stone-700 rounded-full h-1.5">
+                                <motion.div className={`${happinessColor} h-1.5 rounded-full`} initial={{ width: 0 }} animate={{ width: `${happiness}%` }} transition={{ duration: 0.5 }}></motion.div>
+                            </div>
                         </div>
+                        <div className="flex justify-around items-center mt-2">
+                            <CatIconButton label="Feed Me" onClick={handleFeed}><Pizza size={18} /></CatIconButton>
+                            <CatIconButton label="Play a Game" onClick={() => openWindow('games_folder')}><Gamepad2 size={18} /></CatIconButton>
+                            <CatIconButton label="Ask AI" onClick={() => openWindow('ai_assistant')}><Bot size={18} /></CatIconButton>
+                        </div>
+                    </>
+                ) : (
+                    <div className="flex gap-2 mt-2">
+                        <button onClick={handleEndTour} className="text-xs flex-1 py-1 rounded bg-stone-300 dark:bg-stone-700 hover:bg-stone-400 dark:hover:bg-stone-600">End Tour</button>
+                        <button onClick={handleNextStep} className="text-xs flex-1 py-1 rounded bg-amber-500 text-white hover:bg-amber-600">{guideStep >= tourSteps.length ? 'Finish' : 'Next'}</button>
                     </div>
-                    <div className="flex justify-around items-center mt-2">
-                        <CatIconButton label="Feed Me" onClick={handleFeed}><Pizza size={18} /></CatIconButton>
-                        <CatIconButton label="Play a Game" onClick={() => openWindow('games_folder')}><Gamepad2 size={18} /></CatIconButton>
-                        <CatIconButton label="Ask AI" onClick={() => openWindow('ai_assistant')}><Bot size={18} /></CatIconButton>
-                    </div>
-                </>
-            ) : (
-                <div className="flex gap-2 mt-2">
-                    <button onClick={handleEndTour} className="text-xs flex-1 py-1 rounded bg-stone-300 dark:bg-stone-700 hover:bg-stone-400 dark:hover:bg-stone-600">End Tour</button>
-                    <button onClick={handleNextStep} className="text-xs flex-1 py-1 rounded bg-amber-500 text-white hover:bg-amber-600">{guideStep >= tourSteps.length ? 'Finish' : 'Next'}</button>
-                </div>
+                )}
+                </motion.div>
+            )}
+            </AnimatePresence>
+
+            {/* Cat SVG */}
+            <motion.div
+                ref={catRef}
+                style={{ 
+                    transform: direction === 'left' ? 'scaleX(-1)' : 'scaleX(1)',
+                    animation: mood === 'playful' ? 'hop 1s ease-in-out' : (isDoingBackflip ? 'backflip 1s ease-in-out' : 'none'),
+                }}
+                className="w-24 h-24 cursor-grab active:cursor-grabbing transition-transform hover:scale-105"
+                onPointerDown={startDrag}
+                onTap={handlePetClick} // Use new triple-click handler
+            >
+            <svg viewBox="0 0 120 120" className="w-full h-full drop-shadow-lg">
+              <ellipse cx="60" cy="105" rx="30" ry="6" fill="rgba(0, 0, 0, 0.3)" />
+              
+              <path
+                d={mood === 'sleeping' ? "M 85 75 Q 95 75 100 70" : "M 85 65 Q 105 55 100 35"}
+                stroke="#292524" strokeWidth="8" fill="none" strokeLinecap="round"
+                style={{
+                  animation: (mood === 'walking' || mood === 'celebrating' || mood === 'playful') ? 'tailWag 0.6s ease-in-out infinite' : 'none',
+                  transition: 'all 0.5s ease'
+                }}
+              />
+              
+              <g transform={`translate(0, ${getLegOffset(0) + sleepTransform.bodyY})`} style={{ opacity: mood === 'sleeping' ? 0 : 1, transition: 'opacity 0.5s' }}>
+                <rect x="70" y="80" width="6" height="18" rx="3" fill="#292524" />
+                <ellipse cx="73" cy="98" rx="7" ry="4" fill="#1c1917" />
+              </g>
+              
+              <g transform={`translate(0, ${getLegOffset(1) + sleepTransform.bodyY})`} style={{ opacity: mood === 'sleeping' ? 0 : 1, transition: 'opacity 0.5s' }}>
+                <rect x="58" y="80" width="6" height="18" rx="3" fill="#292524" />
+                <ellipse cx="61" cy="98" rx="7" ry="4" fill="#1c1917" />
+              </g>
+              
+              <ellipse cx="60" cy={70 - getBodyBounce() + sleepTransform.bodyY} rx={mood === 'sleeping' ? 32 : 28} ry={mood === 'sleeping' ? 18 : 22} fill="#1c1917" style={{ transition: 'all 0.5s ease' }}/>
+              <ellipse cx="60" cy={68 - getBodyBounce() + sleepTransform.bodyY} rx={mood === 'sleeping' ? 28 : 24} ry={mood === 'sleeping' ? 14 : 16} fill="#292524" opacity="0.5" style={{ transition: 'all 0.5s ease' }} />
+              
+              <g transform={`translate(0, ${getLegOffset(2) + sleepTransform.bodyY})`} style={{ opacity: mood === 'sleeping' ? 0 : 1, transition: 'opacity 0.5s' }}>
+                <rect x="44" y="80" width="6" height="18" rx="3" fill="#292524" />
+                <ellipse cx="47" cy="98" rx="7" ry="4" fill="#1c1917" />
+              </g>
+              
+              <g transform={`translate(0, ${getLegOffset(3) + sleepTransform.bodyY})`} style={{ opacity: mood === 'sleeping' ? 0 : 1, transition: 'opacity 0.5s' }}>
+                <rect x="32" y="80" width="6" height="18" rx="3" fill="#292524" />
+                <ellipse cx="35" cy="98" rx="7" ry="4" fill="#1c1917" />
+              </g>
+              
+              <circle cx="60" cy={50 - getBodyBounce() + sleepTransform.headY} r="26" fill="#1c1917" style={{ transition: 'all 0.5s ease' }} />
+              <circle cx="60" cy={48 - getBodyBounce() + sleepTransform.headY} r="22" fill="#292524" opacity="0.4" style={{ transition: 'all 0.5s ease' }} />
+              
+              <path d={`M 42 ${32 - getBodyBounce() + sleepTransform.headY} L 35 ${15 - getBodyBounce() + sleepTransform.headY} L 48 ${28 - getBodyBounce() + sleepTransform.headY} Z`} fill="#1c1917" style={{ transition: 'all 0.5s ease' }} />
+              <path d={`M 42 ${32 - getBodyBounce() + sleepTransform.headY} L 38 ${22 - getBodyBounce() + sleepTransform.headY} L 46 ${30 - getBodyBounce() + sleepTransform.headY} Z`} fill="#44403c" style={{ transition: 'all 0.5s ease' }} />
+              
+              <path d={`M 78 ${32 - getBodyBounce() + sleepTransform.headY} L 85 ${15 - getBodyBounce() + sleepTransform.headY} L 72 ${28 - getBodyBounce() + sleepTransform.headY} Z`} fill="#1c1917" style={{ transition: 'all 0.5s ease' }} />
+              <path d={`M 78 ${32 - getBodyBounce() + sleepTransform.headY} L 82 ${22 - getBodyBounce() + sleepTransform.headY} L 74 ${30 - getBodyBounce() + sleepTransform.headY} Z`} fill="#44403c" style={{ transition: 'all 0.5s ease' }} />
+              
+              <g transform={`translate(0, ${-getBodyBounce() + sleepTransform.headY})`}>{renderEyes()}</g>
+              
+              <path d={`M 60 ${54 - getBodyBounce() + sleepTransform.headY} L 57 ${57 - getBodyBounce() + sleepTransform.headY} L 63 ${57 - getBodyBounce() + sleepTransform.headY} Z`} fill="#78716c" style={{ transition: 'all 0.5s ease' }} />
+              <path
+                d={mood === 'surprised'
+                  ? `M 60 ${57 - getBodyBounce() + sleepTransform.headY} Q 60 ${63 - getBodyBounce() + sleepTransform.headY} 60 ${63 - getBodyBounce() + sleepTransform.headY}`
+                  : `M 60 ${57 - getBodyBounce() + sleepTransform.headY} Q 54 ${62 - getBodyBounce() + sleepTransform.headY} 50 ${60 - getBodyBounce() + sleepTransform.headY} M 60 ${57 - getBodyBounce() + sleepTransform.headY} Q 66 ${62 - getBodyBounce() + sleepTransform.headY} 70 ${60 - getBodyBounce() + sleepTransform.headY}`
+                }
+                stroke="#78716c" strokeWidth="1.5" fill="none" strokeLinecap="round" style={{ transition: 'all 0.5s ease' }}
+              />
+              
+              <g opacity="0.8" transform={`translate(0, ${-getBodyBounce() + sleepTransform.headY})`}>
+                <path d="M 38 50 L 20 48" stroke="white" strokeWidth="1" strokeLinecap="round" />
+                <path d="M 38 54 L 18 54" stroke="white" strokeWidth="1" strokeLinecap="round" />
+                <path d="M 38 58 L 20 60" stroke="white" strokeWidth="1" strokeLinecap="round" />
+                
+                <path d="M 82 50 L 100 48" stroke="white" strokeWidth="1" strokeLinecap="round" />
+                <path d="M 82 54 L 102 54" stroke="white" strokeWidth="1" strokeLinecap="round" />
+                <path d="M 82 58 L 100 60" stroke="white" strokeWidth="1" strokeLinecap="round" />
+              </g>
+              
+              {mood === 'sleeping' && (
+                <g className="animate-float">
+                  <text x="85" y="30" fill="#78716c" fontSize="12" opacity="0.7">Z</text>
+                  <text x="95" y="22" fill="#78716c" fontSize="10" opacity="0.5">z</text>
+                  <text x="90" y="15" fill="#78716c" fontSize="8" opacity="0.3">z</text>
+                </g>
+              )}
+            </svg>
+
+            {mood === 'surprised' && (
+              <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-2xl animate-surprise">❗</div>
             )}
             </motion.div>
-        )}
-        </AnimatePresence>
-
-        {/* Cat SVG */}
-        <motion.div
-            ref={catRef}
-            style={{ 
-                transform: direction === 'left' ? 'scaleX(-1)' : 'scaleX(1)',
-                animation: mood === 'playful' ? 'hop 1s ease-in-out' : (isDoingBackflip ? 'backflip 1s ease-in-out' : 'none'),
-            }}
-            className="w-24 h-24 cursor-grab active:cursor-grabbing transition-transform hover:scale-105"
-            onPointerDown={startDrag}
-            onTap={handlePetClick} // Use new triple-click handler
-        >
-        <svg viewBox="0 0 120 120" className="w-full h-full drop-shadow-lg">
-          <ellipse cx="60" cy="105" rx="30" ry="6" fill="rgba(0, 0, 0, 0.3)" />
-          
-          <path
-            d={mood === 'sleeping' ? "M 85 75 Q 95 75 100 70" : "M 85 65 Q 105 55 100 35"}
-            stroke="#292524" strokeWidth="8" fill="none" strokeLinecap="round"
-            style={{
-              animation: (mood === 'walking' || mood === 'celebrating' || mood === 'playful') ? 'tailWag 0.6s ease-in-out infinite' : 'none',
-              transition: 'all 0.5s ease'
-            }}
-          />
-          
-          <g transform={`translate(0, ${getLegOffset(0) + sleepTransform.bodyY})`} style={{ opacity: mood === 'sleeping' ? 0 : 1, transition: 'opacity 0.5s' }}>
-            <rect x="70" y="80" width="6" height="18" rx="3" fill="#292524" />
-            <ellipse cx="73" cy="98" rx="7" ry="4" fill="#1c1917" />
-          </g>
-          
-          <g transform={`translate(0, ${getLegOffset(1) + sleepTransform.bodyY})`} style={{ opacity: mood === 'sleeping' ? 0 : 1, transition: 'opacity 0.5s' }}>
-            <rect x="58" y="80" width="6" height="18" rx="3" fill="#292524" />
-            <ellipse cx="61" cy="98" rx="7" ry="4" fill="#1c1917" />
-          </g>
-          
-          <ellipse cx="60" cy={70 - getBodyBounce() + sleepTransform.bodyY} rx={mood === 'sleeping' ? 32 : 28} ry={mood === 'sleeping' ? 18 : 22} fill="#1c1917" style={{ transition: 'all 0.5s ease' }}/>
-          <ellipse cx="60" cy={68 - getBodyBounce() + sleepTransform.bodyY} rx={mood === 'sleeping' ? 28 : 24} ry={mood === 'sleeping' ? 14 : 16} fill="#292524" opacity="0.5" style={{ transition: 'all 0.5s ease' }} />
-          
-          <g transform={`translate(0, ${getLegOffset(2) + sleepTransform.bodyY})`} style={{ opacity: mood === 'sleeping' ? 0 : 1, transition: 'opacity 0.5s' }}>
-            <rect x="44" y="80" width="6" height="18" rx="3" fill="#292524" />
-            <ellipse cx="47" cy="98" rx="7" ry="4" fill="#1c1917" />
-          </g>
-          
-          <g transform={`translate(0, ${getLegOffset(3) + sleepTransform.bodyY})`} style={{ opacity: mood === 'sleeping' ? 0 : 1, transition: 'opacity 0.5s' }}>
-            <rect x="32" y="80" width="6" height="18" rx="3" fill="#292524" />
-            <ellipse cx="35" cy="98" rx="7" ry="4" fill="#1c1917" />
-          </g>
-          
-          <circle cx="60" cy={50 - getBodyBounce() + sleepTransform.headY} r="26" fill="#1c1917" style={{ transition: 'all 0.5s ease' }} />
-          <circle cx="60" cy={48 - getBodyBounce() + sleepTransform.headY} r="22" fill="#292524" opacity="0.4" style={{ transition: 'all 0.5s ease' }} />
-          
-          <path d={`M 42 ${32 - getBodyBounce() + sleepTransform.headY} L 35 ${15 - getBodyBounce() + sleepTransform.headY} L 48 ${28 - getBodyBounce() + sleepTransform.headY} Z`} fill="#1c1917" style={{ transition: 'all 0.5s ease' }} />
-          <path d={`M 42 ${32 - getBodyBounce() + sleepTransform.headY} L 38 ${22 - getBodyBounce() + sleepTransform.headY} L 46 ${30 - getBodyBounce() + sleepTransform.headY} Z`} fill="#44403c" style={{ transition: 'all 0.5s ease' }} />
-          
-          <path d={`M 78 ${32 - getBodyBounce() + sleepTransform.headY} L 85 ${15 - getBodyBounce() + sleepTransform.headY} L 72 ${28 - getBodyBounce() + sleepTransform.headY} Z`} fill="#1c1917" style={{ transition: 'all 0.5s ease' }} />
-          <path d={`M 78 ${32 - getBodyBounce() + sleepTransform.headY} L 82 ${22 - getBodyBounce() + sleepTransform.headY} L 74 ${30 - getBodyBounce() + sleepTransform.headY} Z`} fill="#44403c" style={{ transition: 'all 0.5s ease' }} />
-          
-          <g transform={`translate(0, ${-getBodyBounce() + sleepTransform.headY})`}>{renderEyes()}</g>
-          
-          <path d={`M 60 ${54 - getBodyBounce() + sleepTransform.headY} L 57 ${57 - getBodyBounce() + sleepTransform.headY} L 63 ${57 - getBodyBounce() + sleepTransform.headY} Z`} fill="#78716c" style={{ transition: 'all 0.5s ease' }} />
-          <path
-            d={mood === 'surprised'
-              ? `M 60 ${57 - getBodyBounce() + sleepTransform.headY} Q 60 ${63 - getBodyBounce() + sleepTransform.headY} 60 ${63 - getBodyBounce() + sleepTransform.headY}`
-              : `M 60 ${57 - getBodyBounce() + sleepTransform.headY} Q 54 ${62 - getBodyBounce() + sleepTransform.headY} 50 ${60 - getBodyBounce() + sleepTransform.headY} M 60 ${57 - getBodyBounce() + sleepTransform.headY} Q 66 ${62 - getBodyBounce() + sleepTransform.headY} 70 ${60 - getBodyBounce() + sleepTransform.headY}`
-            }
-            stroke="#78716c" strokeWidth="1.5" fill="none" strokeLinecap="round" style={{ transition: 'all 0.5s ease' }}
-          />
-          
-          <g opacity="0.8" transform={`translate(0, ${-getBodyBounce() + sleepTransform.headY})`}>
-            <path d="M 38 50 L 20 48" stroke="white" strokeWidth="1" strokeLinecap="round" />
-            <path d="M 38 54 L 18 54" stroke="white" strokeWidth="1" strokeLinecap="round" />
-            <path d="M 38 58 L 20 60" stroke="white" strokeWidth="1" strokeLinecap="round" />
-            
-            <path d="M 82 50 L 100 48" stroke="white" strokeWidth="1" strokeLinecap="round" />
-            <path d="M 82 54 L 102 54" stroke="white" strokeWidth="1" strokeLinecap="round" />
-            <path d="M 82 58 L 100 60" stroke="white" strokeWidth="1" strokeLinecap="round" />
-          </g>
-          
-          {mood === 'sleeping' && (
-            <g className="animate-float">
-              <text x="85" y="30" fill="#78716c" fontSize="12" opacity="0.7">Z</text>
-              <text x="95" y="22" fill="#78716c" fontSize="10" opacity="0.5">z</text>
-              <text x="90" y="15" fill="#78716c" fontSize="8" opacity="0.3">z</text>
-            </g>
-          )}
-        </svg>
-
-        {mood === 'surprised' && (
-          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-2xl animate-surprise">❗</div>
-        )}
         </motion.div>
     </motion.div>
   );
-};
-
-
-const DesktopPet: React.FC<DesktopPetProps> = ({ isDoingBackflip }) => {
-    return (
-        <div className="fixed inset-0 pointer-events-none z-[99]">
-             <WalkingCat isDoingBackflip={isDoingBackflip} />
-        </div>
-    );
 };
 
 export default DesktopPet;
